@@ -1,0 +1,36 @@
+volumes/
+.ipynb_checkpoints/
+data/
+.parquet
+.json
+
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Кэш и байт-код
+__pycache__/
+*.pyc
+
+# Скомпилированные файлы
+*.egg-info/
+.eggs/
+
+# Файлы и папки специфичные для редакторов/IDE
+.vscode/
+.idea/
+*.swp
+
+# Файлы с конфигурацией
+.env
+.env.*
+
+# Логи и временные файлы
+*.log
+tmp/
+
+# Файлы зависимостей
+*.egg
+dist/
+build/
