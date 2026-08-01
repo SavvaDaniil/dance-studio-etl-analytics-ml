@@ -67,4 +67,4 @@ Machine Learning
 
 docker compose -f pandas_pipeline/docker-compose.yml up -d
 
-python pandas_pipeline/etl_pipeline.py
+python -m pandas_pipeline.etl_pipeline
