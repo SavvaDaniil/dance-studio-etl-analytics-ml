@@ -3,6 +3,18 @@ volumes/
 data/
 .parquet
 .json
+drivers/
+logs/
+
+# Pandas pipeline
+pandas_pipeline/volumes/
+
+# Spark pipeline
+pyspark_pipeline/volumes/
+
+# Airflow
+pyspark_pipeline/logs/
+pyspark_pipeline/plugins/__pycache__/
 
 # Виртуальное окружение
 venv/

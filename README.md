@@ -1,68 +1,126 @@
 # Dance Studio Analytics Pipeline
 
-A complete ETL and analytics pipeline built for processing dance studio CRM data and forecasting class attendance.
+A complete data engineering project built for processing dance studio CRM data, creating analytical datasets, and forecasting class attendance.
 
-Features
-- Data extraction from CRM REST API
-- ETL pipeline
-- Raw and staging layers stored as Parquet
-- Data transformation with Pandas
-- PostgreSQL data warehouse
-- SQL analytics
-- Exploratory Data Analysis (EDA)
-- Attendance forecasting using Machine Learning
+The repository contains **two independent ETL implementations** built on the same business logic.
 
-Technology Stack
-- Python
-- Pandas
-- PostgreSQL
-- SQLAlchemy
-- Docker
-- Parquet
-- Jupyter Notebook
-- Scikit-learn
-- Analytics
+## Project Structure
 
-The project includes analytical reports such as:
-- attendance by weekday;
-- attendance by class time;
-- teacher ranking;
-- revenue by dance style;
-- cumulative revenue analysis.
+```text
+8count-data-analytics/
+│
+├── shared/                 # Shared extraction logic and common modules
+├── pandas_pipeline/        # Pandas ETL implementation
+├── pyspark_pipeline/       # PySpark + Airflow ETL implementation
+├── notebooks/              # Analytics and Machine Learning
+└── README.md
+```
 
-Machine Learning
+## Implementations
 
-Built regression models to predict attendance.
+### 1. Pandas Pipeline
 
-Models:
-- Linear Regression
-- Decision Tree Regressor
-- Random Forest Regressor
+A lightweight ETL implementation using Pandas.
 
-Best model: Linear Regression
+Features:
 
-## Pipeline
+* CRM REST API extraction
+* Parquet raw layer
+* Data transformation with Pandas
+* PostgreSQL data warehouse
+* SQL analytics
+* Machine Learning models
 
-CRM API (ImpulseCRM)
-    ↓
-Extract (python/requests)
-    ↓
-RAW Parquet
-    ↓
-Transform (pandas)
-    ↓
-STAGING Parquet
-    ↓
-Load (pandas)
-    ↓
-PostgreSQL
-    ↓
-SQL / Jupyter EDA / Analytics
-    ↓
-Machine Learning
+Run:
 
-## Run
+```bash
+docker compose -f pandas_pipeline/docker-compose.yml up -d
 
-docker-compose up -d
+python -m pandas_pipeline.etl_pipeline
+```
 
-python etl_pipeline.py
+Documentation:
+
+```text
+pandas_pipeline/README.md
+```
+
+---
+
+### 2. PySpark + Airflow Pipeline
+
+A production-oriented implementation using PySpark and Apache Airflow.
+
+Features:
+
+* CRM REST API extraction
+* Distributed data processing with PySpark
+* Parquet raw and staging layers
+* PostgreSQL data warehouse
+* Workflow orchestration with Apache Airflow
+* Docker-based deployment
+
+Run:
+
+```bash
+docker compose --project-name 8count-data-analytics -f pyspark_pipeline/docker-compose.yml up -d
+```
+
+Open Airflow:
+
+```text
+http://localhost:8080
+```
+
+Default credentials:
+
+```text
+Username: admin
+Password: admin
+```
+
+Documentation:
+
+```text
+pyspark_pipeline/README.md
+```
+
+## Technologies
+
+* Python
+* Pandas
+* PySpark
+* Apache Airflow
+* PostgreSQL
+* SQLAlchemy
+* Docker
+* Parquet
+* Scikit-learn
+* Jupyter Notebook
+
+## Analytical Reports
+
+The project produces analytical datasets including:
+
+* attendance by weekday;
+* attendance by class time;
+* teacher ranking;
+* revenue by dance style;
+* cumulative revenue analysis.
+
+## Machine Learning
+
+Attendance forecasting models:
+
+* Linear Regression
+* Decision Tree Regressor
+* Random Forest Regressor
+
+Best model:
+
+* Linear Regression
+
+
+
+
+

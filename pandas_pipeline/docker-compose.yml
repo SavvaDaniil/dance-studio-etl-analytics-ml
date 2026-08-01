@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+
+  db:
+    image: postgres:14
+    container_name: 8ca-pandas-db
+    # networks:
+    #   - my_network
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./volumes/postgres-data:/var/lib/postgresql/data
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U postgres"]
+    #   interval: 5s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 10s
+
+# volumes:
+#   postgres_db_volume:
+  
