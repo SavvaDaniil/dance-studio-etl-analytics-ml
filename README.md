@@ -9,10 +9,11 @@ The repository contains **two independent ETL implementations** built on the sam
 ```text
 8count-data-analytics/
 │
-├── shared/                 # Shared extraction logic and common modules
-├── pandas_pipeline/        # Pandas ETL implementation
-├── pyspark_pipeline/       # PySpark + Airflow ETL implementation
-├── notebooks/              # Analytics and Machine Learning
+├── shared/                     # Shared extraction logic and common modules
+├── pandas_pipeline/            # Pandas ETL implementation
+├── pyspark_pipeline/           # PySpark + Airflow ETL implementation
+├── 01_sql_eda.ipynb            # Exploratory data analysis
+├── 02_machine_learning.ipynb   # Machine learning models
 └── README.md
 ```
 
