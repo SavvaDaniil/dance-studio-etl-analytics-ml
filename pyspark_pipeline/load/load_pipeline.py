@@ -13,6 +13,8 @@ from shared.models.schedule import Schedule
 from shared.models.group_single import GroupSingle
 from shared.models.visit import Visit
 from shared.config.database_configuration import DatabaseConfiguration, get_database_configuration
+from minio import Minio
+from shared.config.minio_configuration import MINIO_BUCKET_NAME
 
 
 import pyspark
@@ -38,15 +40,35 @@ def write_table(
         .save()
     )
 
-def load(spark: SparkSession, extract_at: datetime) -> None:
+def read_parquet(spark: SparkSession, extract_at_str: str, object_name: str, is_using_S3: bool) -> DataFrame:
+    if is_using_S3:
+        return read_parquet_from_S3(spark=spark,extract_at_str=extract_at_str, object_name=object_name)
+    else:
+        return read_parquet_local(spark=spark,extract_at_str=extract_at_str, object_name=object_name)
+
+def read_parquet_local(spark: SparkSession, extract_at_str: str, object_name: str) -> DataFrame:
+    return spark.read.parquet(f"./data/staging/{extract_at_str}/{object_name}.parquet")
+
+def read_parquet_from_S3(spark: SparkSession, extract_at_str: str, object_name: str) -> DataFrame:
+    return spark.read.parquet(f"s3a://{MINIO_BUCKET_NAME}/staging/{extract_at_str}/{object_name}")
+
+
+
+def load(spark: SparkSession, extract_at: datetime, is_using_S3: bool) -> None:
     extract_at_str: str = extract_at.strftime("%Y-%m-%d")
     
-    df_styles: DataFrame = spark.read.parquet(f'./data/staging/styles/{extract_at_str}')
-    df_teachers: DataFrame = spark.read.parquet(f'./data/staging/teachers/{extract_at_str}')
-    df_groups: DataFrame = spark.read.parquet(f'./data/staging/groups/{extract_at_str}')
-    df_schedules: DataFrame = spark.read.parquet(f'./data/staging/schedules/{extract_at_str}')
-    df_group_singles: DataFrame = spark.read.parquet(f'./data/staging/group_singles/{extract_at_str}')
-    df_visits: DataFrame = spark.read.parquet(f'./data/staging/visits/{extract_at_str}')
+    # df_styles: DataFrame = spark.read.parquet(f'./data/staging/styles/{extract_at_str}')
+    # df_teachers: DataFrame = spark.read.parquet(f'./data/staging/teachers/{extract_at_str}')
+    # df_groups: DataFrame = spark.read.parquet(f'./data/staging/groups/{extract_at_str}')
+    # df_schedules: DataFrame = spark.read.parquet(f'./data/staging/schedules/{extract_at_str}')
+    # df_group_singles: DataFrame = spark.read.parquet(f'./data/staging/group_singles/{extract_at_str}')
+    # df_visits: DataFrame = spark.read.parquet(f'./data/staging/visits/{extract_at_str}')
+    df_styles: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='styles', is_using_S3=is_using_S3)
+    df_teachers: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='teachers', is_using_S3=is_using_S3)
+    df_groups: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='groups', is_using_S3=is_using_S3)
+    df_schedules: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='schedules', is_using_S3=is_using_S3)
+    df_group_singles: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='group_singles', is_using_S3=is_using_S3)
+    df_visits: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='visits', is_using_S3=is_using_S3)
 
     engine = get_engine()
     PosgtreBase.metadata.create_all(bind=engine)

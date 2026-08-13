@@ -3,6 +3,9 @@ import os, sys
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
+from minio import Minio
+from shared.config.minio_configuration import MINIO_BUCKET_NAME
+from shared.storage.s3_storage import s3_upload_file
 
 import subprocess
 import pyspark
@@ -20,20 +23,35 @@ from pyspark.sql.functions import (
 )
 
     
-def save_staging(df: DataFrame, entity_name: str, extract_at_str: str) -> None:
-    parquet_path: Path = Path(f"./data/staging/{entity_name}/{extract_at_str}")
-    #parquet_path.mkdir(parents=True, exist_ok=True)
+def save_staging(df: DataFrame, entity_name: str, extract_at_str: str, is_using_S3: bool) -> None:
+    parquet_path: Path = Path(f"./data/staging/{extract_at_str}/{entity_name}")
+    parquet_path.mkdir(parents=True, exist_ok=True)
 
-    (
-        df.write
-        .mode("overwrite")
-        .parquet(str(parquet_path))
-    )
+    df.write.mode("overwrite").parquet(str(parquet_path))
 
-def transform(spark: SparkSession, extract_at: datetime):
+    if is_using_S3:
+        parquet_path = f"s3a://{MINIO_BUCKET_NAME}/staging/{extract_at_str}/{entity_name}"
+        df.write.mode("overwrite").parquet(parquet_path)
+
+def read_parquet(spark: SparkSession, extract_at_str: str, object_name: str, is_using_S3: bool) -> DataFrame:
+    if is_using_S3:
+        return read_parquet_from_S3(spark=spark,extract_at_str=extract_at_str, object_name=object_name)
+    else:
+        return read_parquet_local(spark=spark,extract_at_str=extract_at_str, object_name=object_name)
+
+def read_parquet_local(spark: SparkSession, extract_at_str: str, object_name: str) -> DataFrame:
+    return spark.read.parquet(f"./data/raw/{extract_at_str}/{object_name}.parquet")
+
+def read_parquet_from_S3(spark: SparkSession, extract_at_str: str, object_name: str) -> DataFrame:
+    return spark.read.parquet(f"s3a://{MINIO_BUCKET_NAME}/raw/{extract_at_str}/{object_name}.parquet")
+
+
+
+def transform(spark: SparkSession, extract_at: datetime, is_using_S3: bool):
     extract_at_str: str = extract_at.strftime("%Y-%m-%d")
 
-    df_styles = spark.read.parquet(f"./data/raw/styles/{extract_at_str}/styles.parquet")
+    #df_styles = spark.read.parquet(f"./data/raw/styles/{extract_at_str}/styles.parquet")
+    df_styles: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='styles', is_using_S3=is_using_S3)
     df_styles = df_styles.drop(
         "_ingested_at",
         "entity",
@@ -43,7 +61,7 @@ def transform(spark: SparkSession, extract_at: datetime):
     )
 
 
-    df_teachers: DataFrame = spark.read.parquet(f'./data/raw/teachers/{extract_at_str}/teachers.parquet')
+    df_teachers: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='teachers', is_using_S3=is_using_S3)
     df_teachers = (
         df_teachers
         .withColumnRenamed("lastName", "last_name")
@@ -53,7 +71,7 @@ def transform(spark: SparkSession, extract_at: datetime):
     )
 
 
-    df_groups: DataFrame = spark.read.parquet(f'./data/raw/groups/{extract_at_str}/groups.parquet')
+    df_groups: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='groups', is_using_S3=is_using_S3)
     df_groups = (
         df_groups
         #.withColumn("teacher_id", col("teacher1.id"))
@@ -74,7 +92,7 @@ def transform(spark: SparkSession, extract_at: datetime):
     )
 
 
-    df_schedules: DataFrame = spark.read.parquet(f'./data/raw/schedules/{extract_at_str}/schedules.parquet')
+    df_schedules: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='schedules', is_using_S3=is_using_S3)
     df_schedules = (
         df_schedules
         .withColumn("group_id", col("group.id"))
@@ -85,7 +103,7 @@ def transform(spark: SparkSession, extract_at: datetime):
 
 
 
-    df_group_singles: DataFrame = spark.read.parquet(f"./data/raw/group_singles/{extract_at_str}/group_singles.parquet")
+    df_group_singles: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='group_singles', is_using_S3=is_using_S3)
     df_group_singles = (
         df_group_singles
         .withColumn("group_id", col("group.id"))
@@ -115,7 +133,7 @@ def transform(spark: SparkSession, extract_at: datetime):
 
 
 
-    df_visits: DataFrame = spark.read.parquet(f'./data/raw/visits/{extract_at_str}/visits.parquet')
+    df_visits: DataFrame = read_parquet(spark=spark, extract_at_str=extract_at_str, object_name='visits', is_using_S3=is_using_S3)
     df_visits = (
         df_visits
         .withColumn("group_id", col("group.id"))
@@ -154,12 +172,12 @@ def transform(spark: SparkSession, extract_at: datetime):
     #df_group_singles.printSchema()
     #df_group_singles.select("visit_date").show(5, False)
 
-    save_staging(df=df_styles, entity_name="styles", extract_at_str=extract_at_str)
-    save_staging(df=df_teachers, entity_name="teachers", extract_at_str=extract_at_str)
-    save_staging(df=df_groups, entity_name="groups", extract_at_str=extract_at_str)
-    save_staging(df=df_schedules, entity_name="schedules", extract_at_str=extract_at_str)
-    save_staging(df=df_group_singles, entity_name="group_singles", extract_at_str=extract_at_str)
-    save_staging(df=df_visits, entity_name="visits", extract_at_str=extract_at_str)
+    save_staging(df=df_styles, entity_name="styles", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
+    save_staging(df=df_teachers, entity_name="teachers", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
+    save_staging(df=df_groups, entity_name="groups", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
+    save_staging(df=df_schedules, entity_name="schedules", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
+    save_staging(df=df_group_singles, entity_name="group_singles", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
+    save_staging(df=df_visits, entity_name="visits", extract_at_str=extract_at_str, is_using_S3=is_using_S3)
 
 
 if __name__ == "__main__":

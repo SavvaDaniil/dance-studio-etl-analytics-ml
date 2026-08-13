@@ -1,22 +1,24 @@
 # Dance Studio Analytics Pipeline (PySpark + Airflow)
 
-Production-ready ETL pipeline built with **PySpark**, **Apache Airflow**, **PostgreSQL**, and **Docker**.
+ETL pipeline built with **PySpark**, **Apache Airflow**, **MinIO**, **PostgreSQL**, and **Docker**.
 
 ## Features
 
 * Data extraction from CRM REST API
-* ETL pipeline orchestrated by Apache Airflow
-* Distributed data processing with PySpark
+* ETL pipeline with PySpark
+* Workflow orchestration with Apache Airflow
+* S3-compatible object storage using MinIO
 * Raw and staging layers stored as Parquet
 * PostgreSQL data warehouse
 * SQL analytics
-* Docker deployment
+* Docker-based deployment
 
 ## Technology Stack
 
 * Python
 * PySpark
 * Apache Airflow
+* MinIO (S3-compatible storage)
 * PostgreSQL
 * SQLAlchemy
 * Docker
@@ -31,6 +33,8 @@ Extract (Python / Requests / Pandas)
         ↓
 RAW Parquet
         ↓
+MinIO (S3)
+        ↓
 Transform (PySpark)
         ↓
 STAGING Parquet
@@ -44,12 +48,18 @@ SQL Analytics
 
 ## Run
 
-From the project root:
+Run the PySpark pipeline from the project root.
+
+Initialize the Airflow database and create the admin user:
 
 ```bash
-docker compose \
-    --project-name 8count-data-analytics \
-    -f pyspark_pipeline/docker-compose.yml up -d
+docker compose up --project-name 8count-data-analytics airflow-init
+```
+
+Start the services:
+
+```bash
+docker compose up --project-name 8count-data-analytics -d
 ```
 
 Open Airflow:
@@ -77,16 +87,40 @@ The ETL pipeline automatically:
 * transforms datasets using PySpark;
 * loads the processed data into PostgreSQL.
 
+## Storage
+
+The PySpark pipeline uses MinIO as an S3-compatible object storage.
+
+MinIO stores the raw and staging Parquet datasets.
+
+MinIO
+  ├── raw/
+  │   └── YYYY-MM-DD/
+  │
+  └── staging/
+      └── YYYY-MM-DD/
+
 ## Project Structure
+
+The PySpark implementation is located in the pyspark_pipeline/ directory:
 
 ```text
 pyspark_pipeline/
 │
-├── dags/
-├── Dockerfile
-├── docker-compose.yml
 ├── etl_pipeline.py
 ├── transform/
 ├── load/
 └── README.md
+```
+
+The Docker and Airflow infrastructure is defined in the project root:
+
+```text
+8count-data-analytics/
+│
+├── docker-compose.yml
+├── Dockerfile.airflow
+├── pyspark_pipeline/
+├── shared/
+└── ...
 ```

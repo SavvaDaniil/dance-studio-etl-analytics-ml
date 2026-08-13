@@ -9,6 +9,7 @@ The repository contains **two independent ETL implementations** built on the sam
 ```text
 8count-data-analytics/
 │
+├── docker-compose.yml          # PySpark + Airflow + MinIO + PostgreSQL
 ├── shared/                     # Shared extraction logic and common modules
 ├── pandas_pipeline/            # Pandas ETL implementation
 ├── pyspark_pipeline/           # PySpark + Airflow ETL implementation
@@ -50,21 +51,28 @@ pandas_pipeline/README.md
 
 ### 2. PySpark + Airflow Pipeline
 
-A production-oriented implementation using PySpark and Apache Airflow.
+ETL pipeline built with **PySpark**, **Apache Airflow**, **MinIO**, **PostgreSQL**, and **Docker**.
 
 Features:
 
 * CRM REST API extraction
-* Distributed data processing with PySpark
-* Parquet raw and staging layers
+* PySpark data transformation
+* Parquet storage in MinIO (S3-compatible object storage)
 * PostgreSQL data warehouse
 * Workflow orchestration with Apache Airflow
 * Docker-based deployment
+* Shared extraction logic with the Pandas pipeline
 
 Run:
 
 ```bash
-docker compose --project-name 8count-data-analytics -f pyspark_pipeline/docker-compose.yml up -d
+docker compose --project-name 8count-data-analytics up airflow-init
+```
+
+After successful initialization, start the services:
+
+```bash
+docker compose --project-name 8count-data-analytics up -d
 ```
 
 Open Airflow:
