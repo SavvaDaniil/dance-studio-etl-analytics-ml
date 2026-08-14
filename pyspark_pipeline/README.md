@@ -110,12 +110,14 @@ The PySpark pipeline uses MinIO as an S3-compatible object storage.
 
 MinIO stores the raw and staging Parquet datasets.
 
+```text
 MinIO
   ├── raw/
   │   └── YYYY-MM-DD/
   │
   └── staging/
       └── YYYY-MM-DD/
+```
 
 ## Data Flow
 
