@@ -48,10 +48,26 @@ with DAG(
     etl_task = DockerOperator(
         task_id="run_etl",
         image="8count-data-analytics-etl_eda",
-        container_name="dance_etl_run",
+        #container_name="dance_etl_run",
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode="8count-data-analytics_default"
+        network_mode="8count-data-analytics_default",
+        mount_tmp_dir=False,
+
+        environment={
+            "MINIO_ENDPOINT": "minio:9000",
+            "MINIO_ACCESS_KEY": "minioadmin",
+            "MINIO_SECRET_KEY": "minioadmin",
+
+            "AWS_ACCESS_KEY_ID": "minioadmin",
+            "AWS_SECRET_ACCESS_KEY": "minioadmin",
+
+            "DATABASE_HOST": "db",
+            "DATABASE_PORT": "5432",
+            "DATABASE_DATABASE_NAME": "postgres",
+            "DATABASE_USERNAME": "postgres",
+            "DATABASE_PASSWORD": "postgres",
+        },
     )
     etl_task
 

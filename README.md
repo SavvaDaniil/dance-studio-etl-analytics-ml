@@ -1,8 +1,11 @@
 # Dance Studio Analytics Pipeline
 
-A complete data engineering project built for processing dance studio CRM data, creating analytical datasets, and forecasting class attendance.
+A complete data engineering project for processing dance studio CRM data, building analytical datasets, and forecasting class attendance.
 
-The repository contains **two independent ETL implementations** built on the same business logic.
+The repository contains **two independent ETL implementations** built on shared business logic:
+
+- a lightweight **Pandas** pipeline;
+- a **PySpark + Apache Airflow** pipeline with S3-compatible object storage provided by MinIO.
 
 ## Project Structure
 
@@ -56,17 +59,22 @@ ETL pipeline built with **PySpark**, **Apache Airflow**, **MinIO**, **PostgreSQL
 Features:
 
 * CRM REST API extraction
-* PySpark data transformation
-* Parquet storage in MinIO (S3-compatible object storage)
+* Shared extraction logic with the Pandas pipeline
+* Distributed data processing with PySpark
+* RAW and STAGING layers stored as Parquet
+* S3-compatible object storage using MinIO
 * PostgreSQL data warehouse
 * Workflow orchestration with Apache Airflow
+* Scheduled and manual ETL execution
 * Docker-based deployment
-* Shared extraction logic with the Pandas pipeline
 
-Run:
+#### Start the infrastructure:
+
+Initialize the Airflow metadata database and create the default user:
 
 ```bash
 docker compose --project-name 8count-data-analytics up airflow-init
+docker compose --project-name 8count-data-analytics --profile build build etl_eda
 ```
 
 After successful initialization, start the services:
@@ -74,6 +82,10 @@ After successful initialization, start the services:
 ```bash
 docker compose --project-name 8count-data-analytics up -d
 ```
+
+The PySpark ETL container is **not started automatically** as a long-running service.
+
+The ETL job is started by Apache Airflow using DockerOperator when the DAG is triggered.
 
 Open Airflow:
 
@@ -87,6 +99,30 @@ Default credentials:
 Username: admin
 Password: admin
 ```
+
+#### Run the ETL pipeline
+1. Open the Airflow web interface.
+2. Find the dance_studio_etl DAG.
+3. Enable the DAG if it is paused.
+4. Click Trigger DAG.
+
+Airflow starts a temporary ETL container that executes the PySpark pipeline and removes the container after completion.
+
+The pipeline performs:
+
+CRM API
+   ↓
+Extract
+   ↓
+RAW Parquet → MinIO
+   ↓
+Transform → PySpark
+   ↓
+STAGING Parquet → MinIO
+   ↓
+Load
+   ↓
+PostgreSQL
 
 Documentation:
 
@@ -103,9 +139,10 @@ pyspark_pipeline/README.md
 * PostgreSQL
 * SQLAlchemy
 * Docker
+* MinIO / S3
 * Parquet
-* Scikit-learn
 * Jupyter Notebook
+* Scikit-learn
 
 ## Analytical Reports
 
@@ -129,7 +166,30 @@ Best model:
 
 * Linear Regression
 
+## Architecture
 
+The project demonstrates two approaches to the same ETL problem:
 
-
-
+                    ┌──────────────────┐
+                    │    CRM REST API  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Shared Extraction│
+                    │      Logic       │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+     ┌─────────────────┐           ┌─────────────────┐
+     │ Pandas Pipeline  │           │ PySpark Pipeline│
+     │                 │           │   + Airflow     │
+     └────────┬────────┘           └────────┬────────┘
+              │                             │
+              ▼                             ▼
+       Local Parquet                  MinIO / S3
+              │                             │
+              ▼                             ▼
+       PostgreSQL DW                  PostgreSQL DW

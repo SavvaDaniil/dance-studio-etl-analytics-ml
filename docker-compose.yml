@@ -68,6 +68,8 @@ services:
     working_dir: /app
     #volumes:
     #  - .:/app
+    profiles:
+    - build # after changes: docker compose --profile build build etl_eda
     environment:
       DATABASE_HOST: db
       DATABASE_PORT: 5432
