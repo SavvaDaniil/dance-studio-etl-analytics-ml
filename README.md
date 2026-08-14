@@ -74,6 +74,11 @@ Initialize the Airflow metadata database and create the default user:
 
 ```bash
 docker compose --project-name 8count-data-analytics up airflow-init
+```
+
+Build the PySpark ETL image:
+
+```bash
 docker compose --project-name 8count-data-analytics --profile build build etl_eda
 ```
 
@@ -170,7 +175,7 @@ Best model:
 
 ## Architecture
 
-The project demonstrates two approaches to the same ETL problem:
+The project demonstrates two ETL approaches for the same business problem:
 
 
 ```text

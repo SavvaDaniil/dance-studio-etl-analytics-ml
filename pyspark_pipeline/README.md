@@ -56,7 +56,12 @@ Run the PySpark pipeline from the project root.
 Initialize the Airflow database and create the admin user:
 
 ```bash
-docker compose up --project-name 8count-data-analytics airflow-init
+docker compose --project-name 8count-data-analytics up airflow-init
+```
+
+Build the PySpark ETL image:
+
+```bash
 docker compose --project-name 8count-data-analytics --profile build build etl_eda
 ```
 
@@ -73,7 +78,7 @@ The infrastructure includes:
 - PostgreSQL
 - MinIO
 
-The ETL image is built as part of the Docker Compose project, but the ETL container is not started as a permanent service.
+The ETL image is built using the build Docker Compose profile, but the ETL container is not started as a permanent service.
 
 Open Airflow:
 
@@ -177,9 +182,37 @@ dags/dance_studio_pipeline.py
 
 The DAG uses DockerOperator to execute the ETL pipeline in an isolated Docker container.
 
+The ETL container is not started automatically by Docker Compose. It is created by Airflow only when the DAG is triggered.
+
 The pipeline can be triggered:
 - manually from the Airflow UI;
 - automatically according to the configured schedule.
+
+## Architecture
+
+The project separates the ETL image from the Airflow infrastructure.
+
+```text
+Docker Compose
+│
+├── Airflow
+│   ├── Webserver
+│   └── Scheduler
+│
+├── PostgreSQL
+│
+├── MinIO
+│
+└── ETL image
+    │
+    └── started on demand by Airflow
+        │
+        └── DockerOperator
+            │
+            └── PySpark ETL
+```
+
+The ETL image is not run as a long-lived service. Airflow creates a temporary container from the image when the ETL task is executed and removes it after completion.
 
 ## Project Structure
 
@@ -191,6 +224,7 @@ pyspark_pipeline/
 ├── etl_pipeline.py
 ├── transform/
 ├── load/
+├── requirements.txt
 └── README.md
 ```
 
@@ -199,8 +233,11 @@ The Docker and Airflow infrastructure is defined in the project root:
 ```text
 8count-data-analytics/
 │
+├── dags/
+│   └── dance_studio_pipeline.py
 ├── docker-compose.yml
 ├── Dockerfile.airflow
+├── Dockerfile
 ├── pyspark_pipeline/
 ├── shared/
 └── ...
