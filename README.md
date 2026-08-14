@@ -110,6 +110,7 @@ Airflow starts a temporary ETL container that executes the PySpark pipeline and 
 
 The pipeline performs:
 
+```text
 CRM API
    ↓
 Extract
@@ -123,6 +124,7 @@ STAGING Parquet → MinIO
 Load
    ↓
 PostgreSQL
+```
 
 Documentation:
 
@@ -170,6 +172,8 @@ Best model:
 
 The project demonstrates two approaches to the same ETL problem:
 
+
+```text
                     ┌──────────────────┐
                     │    CRM REST API  │
                     └────────┬─────────┘
@@ -193,3 +197,5 @@ The project demonstrates two approaches to the same ETL problem:
               │                             │
               ▼                             ▼
        PostgreSQL DW                  PostgreSQL DW
+
+```

@@ -119,6 +119,7 @@ MinIO
 
 ## Data Flow
 
+```text
                     ┌───────────────┐
                     │   CRM API     │
                     └───────┬───────┘
@@ -162,6 +163,7 @@ MinIO
                     │  PostgreSQL   │
                     │ Data Warehouse│
                     └───────────────┘
+```
 
 ## Airflow
 
